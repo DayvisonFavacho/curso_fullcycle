@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: node #indice o diretorio onde o arquivo Dockerfile está para ser executado
+    container_name: app
+    entrypoint: dockerize -wait tcp://db:3306 -timeout 20s docker-entrypoint.sh # esse entrypoint é padrão da imagem do docker que está sendo utilizado
+    networks:
+      - node-network
+    volumes:
+      - ./node:/usr/src/app
+    tty: true
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db ## Estou dizendo que o meu container app depende de db estou dizendo pra subir primeiro o db e depois o app
+      
+  db: ## nome do serviço
+    image: mysql:5.7    
+    command: --innodb-use-native-aio=0 #:> No caso do mysql tem que rodar esse comando vai deipos do entrypoint padrao
+    #command: --explicit_defaults_for_timestamp=1
+    container_name: db #nome do container
+    restart: always # se o container cair ele vai restartar sozinho
+    tty: true #permite que o container execute o bash    
+    volumes:
+      - ./mysql:/var/lib/mysql #vai ficar dentro do container os arquivos mysql criados no mysql-database      
+    environment:      
+     - MYSQL_ROOT_PASSWORD=root # senha
+     - MYSQL_DATABASE=nodedb #nome da base
+     # MYSQL_USER: root #nome do usuario      
+     - MYSQL_EXPLICIT_DEFAULTS_FOR_TIMESTAMP=1  
+    networks:
+      - node-network  #nome da rede para o container vai se comunicar  
+
+networks:
+  node-network:
+    driver: bridge
+    
