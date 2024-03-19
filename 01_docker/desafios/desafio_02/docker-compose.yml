@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+
+  nginx:
+    image: nginx:latest 
+    build: 
+      context: nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "8080:80"    
+    depends_on:
+      - nodejs
+    networks:
+      - app_network
+
+  nodejs:
+    image: node:15
+    build: 
+      context: node
+      dockerfile: Dockerfile
+    container_name: node_js    
+    volumes:
+      - ./node:/usr/src/app
+    tty: true
+    ports:
+      - "3000:3000"
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=fullcycle
+    depends_on:
+      - mysql
+    networks:
+      - app_network
+
+  mysql:
+    image: mysql:5.7
+    command: --innodb-use-native-aio=0    
+    container_name: mysql
+    restart: always
+    tty: true
+    volumes:          
+      - ./mysql:/var/lib/mysql
+    environment:
+     - MYSQL_ROOT_PASSWORD=root
+     - MYSQL_DATABASE=fullcycle
+     - MYSQL_EXPLICIT_DEFAULTS_FOR_TIMESTAMP=1
+    networks:
+      - app_network
+networks:
+  app_network:
+    driver: bridge
